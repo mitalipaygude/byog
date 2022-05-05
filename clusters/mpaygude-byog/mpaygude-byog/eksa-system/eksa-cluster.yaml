@@ -1,0 +1,93 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: mpaygude-byog
+  namespace: default
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 2
+    endpoint:
+      host: 195.16.10.15
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: mpaygude-byog
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: mpaygude-byog
+  externalEtcdConfiguration:
+    count: 3
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: mpaygude-byog
+  gitOpsRef:
+    kind: FluxConfig
+    name: fc-byog
+  kubernetesVersion: "1.22"
+  managementCluster:
+    name: mpaygude-byog
+  workerNodeGroupConfigurations:
+  - count: 2
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: mpaygude-byog
+    name: md-0
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: mpaygude-byog
+  namespace: default
+spec:
+  datacenter: SDDC-Datacenter
+  insecure: false
+  network: /SDDC-Datacenter/network/sddc-cgw-network-4
+  server: vcenter.sddc-44-239-186-141.vmwarevmc.com
+  thumbprint: A6:68:B5:CA:73:7C:00:23:7B:7F:67:99:3A:B3:1F:8D:AE:91:0C:74
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/etcd: "true"
+  name: mpaygude-byog
+  namespace: default
+spec:
+  datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+  diskGiB: 25
+  folder: /SDDC-Datacenter/vm/capv/mpaygude
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: ubuntu
+  resourcePool: /SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool
+  template: /SDDC-Datacenter/vm/Templates/ubuntu-v1.22.6-kubernetes-1-22-eks-6-amd64-6de2a32
+  users:
+  - name: capv
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFZhCF2e4xmSFrn3kYKc14JONtbVqkzaEDTVoxIoeU6+R+AzVjUIdgLKQwzv0m8Jab+aT/YAc2aFdGnYKq8w5k1/gFe/otEzRHXhK+m1THnAUs2PpZphnzx/dKFlV6KhuQMd/BoYRKrR1U1Rt+iHGAIkWSjGAndllAor/oQrf6LpYGJzEWvGQ1fZ1+6BIMiKg370aTmeJD8pvvMRhFD+x+BJ0kXcAm8qBg5bfUNRX4o6aP3W2YROO7lYi3UDUUGZzh3JtctpRLvyDl07D4RdBL8bD/7Md3BazFOJ9Moec/J1io8TS9uJ/6UNc6e6wPzZDHA3Q4NvhoZKiYaGKhGRFdL8CrkzLD+ZT41mZEEmS4CVTF2BoLUZZNgE3vrpZdAfHXHBEknNzKspxTKtvERpzDEnaEFm8nyWAAl7/GdH4XR3wzq2bXdv/paP2NPlUOTAMngsNx4q664Fs/9l2aPX85IIuy5Lx6STlnJ8nMIIilOeYdx08H2LctYtEU4PQwuuk=
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: FluxConfig
+metadata:
+  name: fc-byog
+  namespace: default
+spec:
+  branch: main
+  clusterConfigPath: clusters/mpaygude-byog
+  git:
+    repositoryUrl: ssh://git@github.com/mitalipaygude/byog.git
+    sshKeyAlgorithm: ""
+  systemNamespace: flux-system
+
+---
